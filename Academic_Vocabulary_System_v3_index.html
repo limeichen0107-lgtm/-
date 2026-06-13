@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Academic Vocabulary System v3.0</title>
+<style>
+:root {
+  --blue:#2454d6; --blue2:#163aa0; --bg:#f5f7fb; --card:#fff; --text:#182033;
+  --muted:#667085; --line:#e5e7eb; --green:#16a34a; --red:#dc2626; --orange:#f97316;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.55}
+header{background:linear-gradient(135deg,var(--blue2),#6f86ff);color:#fff;padding:24px 14px;text-align:center;position:sticky;top:0;z-index:10}
+header h1{margin:0;font-size:24px} header p{margin:5px 0 0;opacity:.9}
+main{max-width:1100px;margin:16px auto;padding:0 12px 78px}
+.card{background:var(--card);border:1px solid #edf0f6;border-radius:18px;padding:16px;margin:12px 0;box-shadow:0 6px 18px rgba(15,23,42,.06)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:#eef3ff;border-radius:14px;padding:14px;text-align:center} .stat b{display:block;font-size:24px;color:var(--blue)}
+button{border:0;background:var(--blue);color:white;border-radius:12px;padding:10px 13px;margin:4px;cursor:pointer;font-size:14px}
+button.secondary{background:#eef3ff;color:var(--blue)} button.danger{background:var(--red)} button.good{background:var(--green)} button.orange{background:var(--orange)}
+input,textarea,select{width:100%;border:1px solid #d0d5dd;border-radius:12px;padding:10px;font-size:15px;margin:5px 0;background:white}
+textarea{min-height:70px}
+.word{font-size:40px;font-weight:800;color:var(--blue);margin:5px 0}
+.badge{display:inline-block;background:#dbeafe;color:#1e40af;border-radius:999px;padding:4px 10px;font-weight:700;margin:3px}
+.example{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin-top:10px}
+.small{font-size:13px;color:var(--muted)}
+.tabs{display:flex;gap:6px;flex-wrap:wrap} .tab.active{background:var(--orange)}
+.section{display:none} .section.active{display:block}
+.navbar{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;z-index:20;padding:8px}
+.navbar button{background:#fff;color:var(--text);font-size:13px;margin:0;padding:8px 5px} .navbar button.active{color:var(--blue);font-weight:800}
+.list-item{border-bottom:1px solid var(--line);padding:10px 0;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.quiz-option{display:block;width:100%;text-align:left;background:#fff;color:var(--text);border:1px solid var(--line)} .correct{background:#ecfdf3!important;border-color:var(--green)!important} .wrong{background:#fef2f2!important;border-color:var(--red)!important}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:7px} .daybox{text-align:center;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 3px;font-size:12px} .done{background:#dcfce7;border-color:#86efac;color:#166534;font-weight:700}
+table{width:100%;border-collapse:collapse;font-size:14px} th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left;vertical-align:top} th{background:#eef3ff;color:#1e3a8a}
+@media(max-width:700px){.word{font-size:32px} header h1{font-size:20px} table,thead,tbody,tr,td,th{display:block} th{display:none} td{border:0} tr{border-bottom:1px solid var(--line);padding:8px 0}}
+</style>
+</head>
+<body>
+<header>
+<h1>Academic Vocabulary System v3.0</h1>
+<p>雅思 + 学术英语 + 设计研究｜可自行新增单词</p>
+</header>
+
+<main>
+<section id="home" class="section active">
+  <div class="card">
+    <h2>首页</h2>
+    <div class="grid">
+      <div class="stat"><b id="totalCount">0</b>总词汇</div>
+      <div class="stat"><b id="checkinCount">0</b>打卡天数</div>
+      <div class="stat"><b id="masteredCount">0</b>已掌握</div>
+      <div class="stat"><b id="wrongCount">0</b>错词</div>
+      <div class="stat"><b id="favCount">0</b>收藏</div>
+    </div>
+    <button class="good" onclick="checkin()">今日打卡 ✅</button>
+    <button class="secondary" onclick="renderCalendar()">刷新日历</button>
+    <p id="todayStatus" class="small"></p>
+  </div>
+  <div class="card">
+    <h2>Day / 分类选择</h2>
+    <div class="grid">
+      <select id="daySelect" onchange="setFilters()"></select>
+      <select id="catSelect" onchange="setFilters()"></select>
+    </div>
+  </div>
+  <div class="card">
+    <h2>本月打卡</h2>
+    <div id="calendar" class="calendar"></div>
+  </div>
+</section>
+
+<section id="learn" class="section">
+  <div class="card">
+    <h2>单词卡片</h2>
+    <div class="small" id="cardIndex"></div>
+    <div class="word" id="wWord"></div>
+    <span class="badge" id="wPos"></span><span class="badge" id="wDay"></span><span class="badge" id="wCat"></span>
+    <p id="wPhonetic" class="small"></p>
+    <button onclick="speak(currentWord().word)">🔊 单词</button>
+    <button class="secondary" onclick="toggleMeaning()">显示/隐藏释义</button>
+    <div id="meaningBox">
+      <h3 id="wMeaning"></h3>
+      <p><b>搭配：</b><span id="wPhrase"></span></p>
+      <div class="example">
+        <p><b>例句：</b><span id="wSentence"></span></p>
+        <p id="wTranslation" class="small"></p>
+        <button class="secondary" onclick="speak(currentWord().sentence)">🔊 例句</button>
+      </div>
+    </div>
+    <button onclick="prevWord()">⬅️ 上一个</button><button onclick="nextWord()">下一个 ➡️</button><button class="secondary" onclick="randomWord()">随机</button>
+    <button class="good" onclick="mark('mastered')">已掌握</button><button class="danger" onclick="mark('wrong')">错词</button><button class="orange" onclick="mark('fav')">收藏</button>
+  </div>
+</section>
+
+<section id="admin" class="section">
+  <div class="card">
+    <h2>单词管理后台</h2>
+    <p class="small">在这里新增 Day2、Day3……不用每天改代码。数据保存在当前浏览器。</p>
+    <div class="grid">
+      <input id="fDay" type="number" placeholder="Day，例如 2" value="2">
+      <select id="fCategory">
+        <option>IELTS Academic</option><option>Academic Writing</option><option>Design Research</option><option>My Paper Vocabulary</option>
+      </select>
+    </div>
+    <div class="grid">
+      <input id="fWord" placeholder="word">
+      <input id="fPos" placeholder="词性，如 v. / n. / adj.">
+      <input id="fPhonetic" placeholder="音标，如 /.../">
+      <input id="fMeaning" placeholder="中文释义">
+    </div>
+    <input id="fPhrase" placeholder="核心搭配">
+    <textarea id="fSentence" placeholder="学术例句"></textarea>
+    <textarea id="fTranslation" placeholder="例句中文翻译"></textarea>
+    <button class="good" onclick="addWord()">新增单词</button>
+    <button class="secondary" onclick="clearForm()">清空输入框</button>
+  </div>
+  <div class="card">
+    <h2>批量导入</h2>
+    <p class="small">每行格式：Day｜分类｜单词｜词性｜音标｜中文｜搭配｜例句｜翻译</p>
+    <textarea id="bulkText" placeholder="2｜IELTS Academic｜framework｜n.｜/ˈfreɪmwɜːrk/｜框架；体系｜theoretical framework｜The paper proposes a theoretical framework.｜本文提出了一个理论框架。"></textarea>
+    <button onclick="bulkImport()">批量导入</button>
+  </div>
+  <div class="card">
+    <h2>数据导入 / 导出</h2>
+    <button class="secondary" onclick="exportAll()">导出全部数据</button>
+    <button class="secondary" onclick="importAll()">导入JSON数据</button>
+    <button class="danger" onclick="resetWords()">恢复初始词库</button>
+    <textarea id="dataBox" placeholder="导出的数据或要导入的JSON放这里"></textarea>
+  </div>
+</section>
+
+<section id="quiz" class="section">
+  <div class="card">
+    <h2>自测</h2>
+    <button onclick="choiceQuiz()">选择题</button>
+    <button onclick="spellQuiz()">拼写测试</button>
+    <button onclick="listenQuiz()">听音辨词</button>
+    <div id="quizBox" class="card"></div>
+  </div>
+</section>
+
+<section id="bank" class="section">
+  <div class="card">
+    <h2>词库</h2>
+    <div class="tabs">
+      <button onclick="renderBank('all')">全部</button>
+      <button onclick="renderBank('mastered')">已掌握</button>
+      <button onclick="renderBank('wrong')">错词本</button>
+      <button onclick="renderBank('fav')">收藏</button>
+    </div>
+    <div id="bankBox"></div>
+  </div>
+</section>
+</main>
+
+<div class="navbar">
+<button class="active" onclick="show('home',this)">首页</button>
+<button onclick="show('learn',this)">背词</button>
+<button onclick="show('quiz',this)">自测</button>
+<button onclick="show('admin',this)">管理</button>
+<button onclick="show('bank',this)">词库</button>
+</div>
+
+<script>
+const STARTER = [{"day": 1, "category": "IELTS Academic", "word": "significant", "pos": "adj.", "phonetic": "/sɪɡˈnɪfɪkənt/", "meaning": "显著的；重要的", "phrase": "significant impact; significant difference", "sentence": "The study revealed a significant difference between the two groups.", "translation": "研究显示两组之间存在显著差异。"}, {"day": 1, "category": "IELTS Academic", "word": "evaluate", "pos": "v.", "phonetic": "/ɪˈvæljueɪt/", "meaning": "评估；评价", "phrase": "evaluate effectiveness; evaluate performance", "sentence": "Researchers evaluated the effectiveness of the application.", "translation": "研究人员评估了该应用程序的有效性。"}, {"day": 1, "category": "IELTS Academic", "word": "contribute", "pos": "v.", "phonetic": "/kənˈtrɪbjuːt/", "meaning": "促进；贡献；导致", "phrase": "contribute to", "sentence": "Emotional design contributes to user engagement.", "translation": "情感化设计有助于提升用户参与度。"}, {"day": 1, "category": "Academic Writing", "word": "methodology", "pos": "n.", "phonetic": "/ˌmeθəˈdɑːlədʒi/", "meaning": "研究方法；方法论", "phrase": "research methodology", "sentence": "The methodology is explained in Chapter 3.", "translation": "研究方法在第三章进行了说明。"}, {"day": 1, "category": "IELTS Academic", "word": "approach", "pos": "n./v.", "phonetic": "/əˈproʊtʃ/", "meaning": "方法；途径；接近；处理", "phrase": "research approach", "sentence": "This study adopts a mixed-method approach.", "translation": "本研究采用混合研究方法。"}, {"day": 1, "category": "Academic Writing", "word": "establish", "pos": "v.", "phonetic": "/ɪˈstæblɪʃ/", "meaning": "建立；证实", "phrase": "establish a relationship", "sentence": "The research established a relationship between emotion and user behavior.", "translation": "该研究建立了情感与用户行为之间的关系。"}, {"day": 1, "category": "Design Research", "word": "enhance", "pos": "v.", "phonetic": "/ɪnˈhæns/", "meaning": "提升；增强", "phrase": "enhance experience", "sentence": "The design enhances users' cultural experience.", "translation": "该设计提升了用户的文化体验。"}, {"day": 1, "category": "Academic Writing", "word": "investigate", "pos": "v.", "phonetic": "/ɪnˈvestɪɡeɪt/", "meaning": "调查；研究", "phrase": "investigate factors", "sentence": "This paper investigates the impact of digital media on cultural communication.", "translation": "本文研究数字媒体对文化传播的影响。"}, {"day": 1, "category": "Design Research", "word": "perceive", "pos": "v.", "phonetic": "/pərˈsiːv/", "meaning": "感知；认为", "phrase": "perceived value", "sentence": "Users perceived the platform as engaging and innovative.", "translation": "用户认为该平台具有吸引力且富有创新性。"}, {"day": 1, "category": "Academic Writing", "word": "facilitate", "pos": "v.", "phonetic": "/fəˈsɪlɪteɪt/", "meaning": "促进；使便利", "phrase": "facilitate communication", "sentence": "Digital technologies facilitate cultural dissemination.", "translation": "数字技术促进文化传播。"}];
+let wordIndex = 0, filtered = [], meaningHidden = false;
+
+function getWords(){ return JSON.parse(localStorage.getItem('words_v3') || JSON.stringify(STARTER)); }
+function saveWords(words){ localStorage.setItem('words_v3', JSON.stringify(words)); refresh(); }
+function arr(k){ return JSON.parse(localStorage.getItem(k)||'[]'); }
+function setArr(k,v){ localStorage.setItem(k,JSON.stringify(v)); updateStats(); }
+function idOf(w){ return `${w.day}|${w.category}|${w.word}`; }
+function todayKey(){const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,'0')+"-"+String(d.getDate()).padStart(2,'0');}
+
+function refresh(){ renderSelectors(); setFilters(); updateStats(); renderCalendar(); }
+function renderSelectors(){
+ const words=getWords(); const days=[...new Set(words.map(w=>w.day))].sort((a,b)=>a-b); const cats=[...new Set(words.map(w=>w.category))];
+ daySelect.innerHTML='<option value="all">全部Day</option>'+days.map(d=>`<option value="${d}">Day ${d}</option>`).join('');
+ catSelect.innerHTML='<option value="all">全部分类</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+}
+function setFilters(){
+ const d=daySelect.value, c=catSelect.value; filtered=getWords().filter(w=>(d==='all'||String(w.day)===d)&&(c==='all'||w.category===c));
+ if(!filtered.length) filtered=getWords(); wordIndex=0; renderCard();
+}
+function currentWord(){ return filtered[wordIndex] || getWords()[0]; }
+function renderCard(){
+ const w=currentWord(); if(!w) return;
+ cardIndex.textContent=`${wordIndex+1} / ${filtered.length}`;
+ wWord.textContent=w.word; wPos.textContent=w.pos; wDay.textContent='Day '+w.day; wCat.textContent=w.category; wPhonetic.textContent=w.phonetic;
+ wMeaning.textContent=w.meaning; wPhrase.textContent=w.phrase; wSentence.textContent=w.sentence; wTranslation.textContent=w.translation;
+}
+function nextWord(){ wordIndex=(wordIndex+1)%filtered.length; renderCard(); }
+function prevWord(){ wordIndex=(wordIndex-1+filtered.length)%filtered.length; renderCard(); }
+function randomWord(){ wordIndex=Math.floor(Math.random()*filtered.length); renderCard(); }
+function toggleMeaning(){ meaningHidden=!meaningHidden; meaningBox.style.display=meaningHidden?'none':'block'; }
+function speak(t){ if(!('speechSynthesis' in window)) return alert('当前浏览器不支持发音'); speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='en-US'; u.rate=.82; speechSynthesis.speak(u); }
+
+function mark(k){ const id=idOf(currentWord()); let a=arr(k); if(!a.includes(id)) a.push(id); setArr(k,a); alert('已更新'); }
+function checkin(){let a=arr('checkins_v3'); const t=todayKey(); if(!a.includes(t)) a.push(t); setArr('checkins_v3',a); renderCalendar();}
+function renderCalendar(){ const a=arr('checkins_v3'); const d=new Date(), y=d.getFullYear(), m=d.getMonth(); const n=new Date(y,m+1,0).getDate(); calendar.innerHTML=''; for(let i=1;i<=n;i++){ const k=y+"-"+String(m+1).padStart(2,'0')+"-"+String(i).padStart(2,'0'); const div=document.createElement('div'); div.className='daybox '+(a.includes(k)?'done':''); div.textContent=i+(a.includes(k)?' ✓':''); calendar.appendChild(div); } todayStatus.textContent=a.includes(todayKey())?'今日已打卡 ✅':'今日未打卡'; }
+function updateStats(){ totalCount.textContent=getWords().length; checkinCount.textContent=arr('checkins_v3').length; masteredCount.textContent=arr('mastered').length; wrongCount.textContent=arr('wrong').length; favCount.textContent=arr('fav').length; }
+
+function addWord(){
+ const w={day:+fDay.value||1,category:fCategory.value,word:fWord.value.trim(),pos:fPos.value.trim(),phonetic:fPhonetic.value.trim(),meaning:fMeaning.value.trim(),phrase:fPhrase.value.trim(),sentence:fSentence.value.trim(),translation:fTranslation.value.trim()};
+ if(!w.word||!w.meaning) return alert('至少填写单词和中文释义');
+ const words=getWords(); words.push(w); saveWords(words); clearForm(); alert('新增成功');
+}
+function clearForm(){ ['fWord','fPos','fPhonetic','fMeaning','fPhrase','fSentence','fTranslation'].forEach(id=>document.getElementById(id).value=''); }
+function bulkImport(){
+ const lines=bulkText.value.split('\n').map(x=>x.trim()).filter(Boolean); const words=getWords();
+ lines.forEach(line=>{ const p=line.split('｜'); if(p.length>=9) words.push({day:+p[0],category:p[1],word:p[2],pos:p[3],phonetic:p[4],meaning:p[5],phrase:p[6],sentence:p[7],translation:p[8]}); });
+ saveWords(words); bulkText.value=''; alert('批量导入完成');
+}
+function exportAll(){ dataBox.value=JSON.stringify({words:getWords(),checkins:arr('checkins_v3'),mastered:arr('mastered'),wrong:arr('wrong'),fav:arr('fav')},null,2); }
+function importAll(){ try{ const d=JSON.parse(dataBox.value); if(d.words) saveWords(d.words); ['checkins_v3','mastered','wrong','fav'].forEach(k=>{if(d[k]) setArr(k,d[k])}); alert('导入成功'); }catch(e){alert('JSON格式不对')} }
+function resetWords(){ if(confirm('恢复初始词库？')){ localStorage.removeItem('words_v3'); refresh(); } }
+
+function show(id,btn){ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); document.querySelectorAll('.navbar button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); if(id==='bank') renderBank('all'); }
+function wordById(id){ return getWords().find(w=>idOf(w)===id); }
+function renderBank(type){ let list=getWords(); if(type!=='all') list=arr(type).map(wordById).filter(Boolean); bankBox.innerHTML=list.length?list.map(w=>`<div class="list-item"><div><b>${w.word}</b> <span class="small">${w.pos}｜Day ${w.day}｜${w.category}</span><br><span class="small">${w.meaning}</span></div><button class="secondary" onclick="speak('${w.word}')">🔊</button></div>`).join(''):'<p class="small">暂无内容</p>'; }
+
+function choiceQuiz(){ const words=getWords(); const w=words[Math.floor(Math.random()*words.length)]; let opts=[w.meaning]; while(opts.length<4){ let m=words[Math.floor(Math.random()*words.length)].meaning; if(!opts.includes(m)) opts.push(m); } opts.sort(()=>Math.random()-.5); quizBox.innerHTML=`<h3>${w.word} <span class="small">${w.pos}</span></h3>${opts.map(o=>`<button class="quiz-option" onclick="checkChoice(this,'${o}','${w.meaning}','${idOf(w)}')">${o}</button>`).join('')}<div id="result"></div>`; }
+function checkChoice(btn,o,ans,id){ if(o===ans){btn.classList.add('correct'); result.innerHTML='<p style="color:var(--green)">✔ 正确</p>'; let a=arr('mastered'); if(!a.includes(id)) a.push(id); setArr('mastered',a);} else {btn.classList.add('wrong'); result.innerHTML='<p style="color:var(--red)">✘ 错误，正确答案：'+ans+'</p>'; let a=arr('wrong'); if(!a.includes(id)) a.push(id); setArr('wrong',a);} }
+function spellQuiz(){ const w=getWords()[Math.floor(Math.random()*getWords().length)]; quizBox.innerHTML=`<h3>拼写测试</h3><p>中文：<b>${w.meaning}</b></p><input id="spellInput" placeholder="请输入英文"><button onclick="checkSpell('${w.word}','${idOf(w)}')">提交</button><div id="result"></div>`; }
+function checkSpell(ans,id){ const v=spellInput.value.trim().toLowerCase(); if(v===ans.toLowerCase()){result.innerHTML='<p style="color:var(--green)">✔ 正确</p>'; let a=arr('mastered'); if(!a.includes(id)) a.push(id); setArr('mastered',a);} else {result.innerHTML='<p style="color:var(--red)">✘ 错误，正确答案：'+ans+'</p>'; let a=arr('wrong'); if(!a.includes(id)) a.push(id); setArr('wrong',a);} }
+function listenQuiz(){ const w=getWords()[Math.floor(Math.random()*getWords().length)]; quizBox.innerHTML=`<h3>听音辨词</h3><button onclick="speak('${w.word}')">🔊 播放</button><input id="listenInput" placeholder="写下听到的单词"><button onclick="checkSpell('${w.word}','${idOf(w)}')">提交</button><div id="result"></div>`; speak(w.word); }
+
+refresh(); choiceQuiz();
+</script>
+</body>
+</html>
