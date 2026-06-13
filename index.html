@@ -1,0 +1,111 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IELTS Vocabulary Pro - 李渼忱版</title>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f7fb;margin:0}
+.header{background:#3b5bdb;color:#fff;padding:20px;text-align:center}
+.card{background:#fff;margin:12px;border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.stats{display:flex;gap:10px;flex-wrap:wrap}
+.stat{flex:1;min-width:120px;background:#eef3ff;padding:12px;border-radius:12px;text-align:center}
+.word{font-size:34px;font-weight:bold;color:#3b5bdb}
+.pos{display:inline-block;background:#dbe4ff;padding:4px 10px;border-radius:20px}
+button{background:#3b5bdb;color:white;border:none;padding:10px 14px;border-radius:10px;margin:4px}
+.hidden{display:none}
+table{width:100%;border-collapse:collapse}
+td,th{padding:8px;border-bottom:1px solid #eee}
+</style>
+</head>
+<body>
+<div class="header">
+<h1>IELTS Vocabulary Pro</h1>
+<p>雅思 + 学术英语 + 设计学研究</p>
+</div>
+
+<div class="card">
+<h2>今日打卡</h2>
+<button onclick="checkin()">✅ 完成今日学习</button>
+<p id="status">未打卡</p>
+</div>
+
+<div class="card">
+<h2>学习统计</h2>
+<div class="stats">
+<div class="stat"><h3>10</h3><p>累计单词</p></div>
+<div class="stat"><h3 id="days">0</h3><p>打卡天数</p></div>
+<div class="stat"><h3>Day1</h3><p>当前进度</p></div>
+</div>
+</div>
+
+<div class="card">
+<h2>单词卡片</h2>
+<div class="word" id="word">significant</div>
+<p class="pos" id="pos">adj.</p>
+<p id="meaning">显著的；重要的</p>
+<p><b>音标：</b>/sɪɡˈnɪfɪkənt/</p>
+<button onclick="speak()">🔊 发音</button>
+<button onclick="nextWord()">➡️ 下一个</button>
+<hr>
+<p><b>搭配：</b><span id="phrase">significant impact</span></p>
+<p><b>例句：</b><span id="sentence">The study revealed a significant difference.</span></p>
+<p><b>翻译：</b><span id="translation">研究显示存在显著差异。</span></p>
+</div>
+
+<div class="card">
+<h2>错词本</h2>
+<textarea style="width:100%;height:100px" placeholder="记录记不住的单词"></textarea>
+</div>
+
+<div class="card">
+<h2>Day1 词库</h2>
+<table>
+<tr><th>单词</th><th>词性</th><th>中文</th></tr>
+<tr><td>significant</td><td>adj.</td><td>显著的</td></tr>
+<tr><td>contribute</td><td>v.</td><td>促进</td></tr>
+<tr><td>evaluate</td><td>v.</td><td>评估</td></tr>
+<tr><td>approach</td><td>n./v.</td><td>方法</td></tr>
+<tr><td>establish</td><td>v.</td><td>建立</td></tr>
+<tr><td>enhance</td><td>v.</td><td>提升</td></tr>
+<tr><td>investigate</td><td>v.</td><td>研究</td></tr>
+<tr><td>perceive</td><td>v.</td><td>感知</td></tr>
+<tr><td>demonstrate</td><td>v.</td><td>证明</td></tr>
+<tr><td>facilitate</td><td>v.</td><td>促进</td></tr>
+</table>
+</div>
+
+<script>
+const words=[
+["significant","adj.","显著的；重要的","/sɪɡˈnɪfɪkənt/","significant impact","The study revealed a significant difference.","研究显示存在显著差异。"],
+["contribute","v.","促进；贡献","/kənˈtrɪbjuːt/","contribute to","Emotional design contributes to user engagement.","情感化设计促进用户参与。"],
+["evaluate","v.","评估","/ɪˈvæljueɪt/","evaluate effectiveness","Researchers evaluated the effectiveness.","研究人员评估了有效性。"]
+];
+let i=0;
+function nextWord(){
+i=(i+1)%words.length;
+let w=words[i];
+word.innerText=w[0];
+pos.innerText=w[1];
+meaning.innerText=w[2];
+document.querySelectorAll("b")[0];
+document.getElementById("phrase").innerText=w[4];
+document.getElementById("sentence").innerText=w[5];
+document.getElementById("translation").innerText=w[6];
+}
+function speak(){
+let u=new SpeechSynthesisUtterance(word.innerText);
+u.lang='en-US';
+speechSynthesis.speak(u);
+}
+function checkin(){
+let d=parseInt(localStorage.getItem('days')||0)+1;
+localStorage.setItem('days',d);
+document.getElementById('days').innerText=d;
+document.getElementById('status').innerText='已打卡';
+}
+document.getElementById('days').innerText=localStorage.getItem('days')||0;
+</script>
+</body>
+</html>
